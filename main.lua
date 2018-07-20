@@ -10,7 +10,17 @@ VIRTUAL_HEIGHT = 288
 
 
 local background = love.graphics.newImage('resources/background.png')
+local backgroundScroll = 0
+
 local ground = love.graphics.newImage('resources/ground.png')
+local groundScroll = 0
+
+-- speed at which we should scroll our images, scaled by dt
+local BACKGROUND_SCROLL_SPEED = 30
+local GROUND_SCROLL_SPEED = 60
+
+-- point at which we should loop our background back to X 0
+local BACKGROUND_LOOPING_POINT = 413
 
 
 function love.load()
@@ -35,14 +45,22 @@ function love.keypressed(key)
     end
 end
 
+function love.update(dt)
+    backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt) 
+        % BACKGROUND_LOOPING_POINT
+
+    groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt) 
+        % VIRTUAL_WIDTH
+end
+
 function love.draw()
     push:start()
     
     -- draw the background starting at top left (0, 0)
-    love.graphics.draw(background, 0, 0)
+    love.graphics.draw(background,  -backgroundScroll, 0)
 
     -- draw the ground on top of the background, toward the bottom of the screen
-    love.graphics.draw(ground, 0, VIRTUAL_HEIGHT - 16)
+    love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
     
     push:finish()
 end
