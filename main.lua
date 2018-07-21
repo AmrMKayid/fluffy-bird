@@ -3,6 +3,7 @@ Class = require 'lib/class'
 
 require 'Bird'
 require 'Pipe'
+require 'PipePair'
 
 -- physical screen dimensions
 WINDOW_WIDTH = 1280
@@ -29,11 +30,14 @@ local BACKGROUND_LOOPING_POINT = 413
 -- our bird sprite
 local bird = Bird()
 
--- our table of spawning Pipes
-local pipes = {}
+-- our table of spawning PipePairs
+local pipePairs = {}
 
 -- our timer for spawning pipes
 local spawnTimer = 0
+
+-- initialize our last recorded Y value for a gap placement to base other gaps off of
+local lastY = -PIPE_HEIGHT + math.random(80) + 20
 
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
@@ -97,8 +101,8 @@ function love.draw()
     love.graphics.draw(background,  -backgroundScroll, 0)
 
 	-- render all the pipes in our scene
-    for k, pipe in pairs(pipes) do
-        pipe:render()
+    for k, pair in pairs(pipePairs) do
+        pair:render()
     end
 
     -- draw the ground on top of the background, toward the bottom of the screen
@@ -115,18 +119,22 @@ function pipeSpawn( dt )
 
     -- spawn a new Pipe if the timer is past 2 seconds
     if spawnTimer > 2 then
-        table.insert(pipes, Pipe())
-        print('Added new pipe!')
+    	local y = math.max(-PIPE_HEIGHT + 10, 
+            math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
+        lastY = y
+
+        table.insert(pipePairs, PipePair(y))
         spawnTimer = 0
     end
 
     -- for every pipe in the scene...
-    for k, pipe in pairs(pipes) do
-        pipe:update(dt)
+    for k, pair in pairs(pipePairs) do
+        pair:update(dt)
+    end
 
-        -- if pipe is no longer visible past left edge, remove it from scene
-        if pipe.x < -pipe.width then
-            table.remove(pipes, k)
+    for k, pair in pairs(pipePairs) do
+        if pair.remove then
+            table.remove(pipePairs, k)
         end
     end
 end
