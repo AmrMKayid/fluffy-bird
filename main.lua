@@ -39,6 +39,9 @@ local spawnTimer = 0
 -- initialize our last recorded Y value for a gap placement to base other gaps off of
 local lastY = -PIPE_HEIGHT + math.random(80) + 20
 
+-- scrolling variable to pause the game when we collide with a pipe
+local scrolling = true
+
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
 
@@ -80,15 +83,17 @@ function love.keyboard.wasPressed(key)
 end
 
 function love.update(dt)
-    backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt) 
-        % BACKGROUND_LOOPING_POINT
+    if scrolling then
+        backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt) 
+            % BACKGROUND_LOOPING_POINT
 
-    groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt) 
-        % VIRTUAL_WIDTH
+        groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt) 
+            % VIRTUAL_WIDTH
 
-	pipeSpawn(dt)
+    	pipeSpawn(dt)
 
-    bird:update(dt)
+        bird:update(dt)
+    end
 
     -- reset input table
     love.keyboard.keysPressed = {}
@@ -130,6 +135,17 @@ function pipeSpawn( dt )
     -- for every pipe in the scene...
     for k, pair in pairs(pipePairs) do
         pair:update(dt)
+
+        for l, pipe in pairs(pair.pipes) do
+            if bird:collides(pipe) then
+                scrolling = false
+            end
+        end
+
+        -- if pipe is no longer visible past left edge, remove it from scene
+        if pair.x < -PIPE_WIDTH then
+            pair.remove = true
+        end
     end
 
     for k, pair in pairs(pipePairs) do
